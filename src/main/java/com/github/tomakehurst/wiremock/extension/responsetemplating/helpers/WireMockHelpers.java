@@ -144,9 +144,39 @@ public enum WireMockHelpers implements Helper<Object> {
         public Object apply(Object context, Options options) throws IOException {
             return helper.apply(context, options);
         }
+    },
+	forEachJson {
+        private HandlebarsForEachJsonHelper helper = new HandlebarsForEachJsonHelper();
+
+        @Override
+        public Object apply(Object context, Options options) throws IOException {
+            return helper.apply(context.toString(), options);
+        }
+    },
+    subtract {
+        private HandlebarsJsonPathHelper helper = new HandlebarsJsonPathHelper();
+
+        @Override
+        public Object apply(final Object context, final Options options) throws IOException {
+            Object jsonObject = this.helper.apply(String.valueOf(context), options);
+            Integer amount = options.param(1, 0);
+            if (jsonObject instanceof Double) {
+                return (Double) jsonObject - amount;
+            }
+
+            return jsonObject.toString();
+        }
+    },
+    multiply {
+        @Override
+        public Object apply(final Object context, final Options options) throws IOException {
+            Double amount = options.param(0, 0.0);
+            if (context instanceof Double) {
+                return (Double) context * amount;
+            }
+
+            return context.toString();
+        }
     }
-
-
-
 
 }

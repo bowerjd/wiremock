@@ -15,14 +15,14 @@
  */
 package com.github.tomakehurst.wiremock.extension.responsetemplating.helpers;
 
+import java.io.IOException;
+
 import com.github.jknack.handlebars.Options;
-import com.github.tomakehurst.wiremock.common.Json;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.JsonPathException;
-
-import java.io.IOException;
-import java.util.Map;
+import com.jayway.jsonpath.Option;
 
 public class HandlebarsJsonPathHelper extends HandlebarsHelper<Object> {
 
@@ -37,10 +37,12 @@ public class HandlebarsJsonPathHelper extends HandlebarsHelper<Object> {
         }
 
         final String jsonPath = options.param(0);
+
         try {
             Object result = input instanceof String ?
-                    JsonPath.read((String) input, jsonPath) :
-                    JsonPath.read(input, jsonPath);
+                JsonPath.using(Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build()).parse((String) input).read(jsonPath) :
+                JsonPath.using(Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build()).parse(input).read(jsonPath);
+
             return JsonData.create(result);
         } catch (InvalidJsonException e) {
             return this.handleError(

@@ -39,7 +39,7 @@ public class HandlebarsRandomValuesHelper extends HandlebarsHelper<Void> {
                 rawValue = RandomStringUtils.randomAlphabetic(length);
                 break;
             case "NUMERIC":
-                rawValue = RandomStringUtils.randomNumeric(length);
+				rawValue = "1" + RandomStringUtils.randomNumeric(length - 1);
                 break;
             case "ALPHANUMERIC_AND_SYMBOLS":
                 rawValue = RandomStringUtils.random(length);
