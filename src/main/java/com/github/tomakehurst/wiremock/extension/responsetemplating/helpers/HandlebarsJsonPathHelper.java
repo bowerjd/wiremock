@@ -18,7 +18,9 @@ package com.github.tomakehurst.wiremock.extension.responsetemplating.helpers;
 import java.io.IOException;
 
 import com.github.jknack.handlebars.Options;
+import com.github.tomakehurst.wiremock.extension.responsetemplating.RenderCache;
 import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.InvalidJsonException;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.JsonPathException;
@@ -39,10 +41,8 @@ public class HandlebarsJsonPathHelper extends HandlebarsHelper<Object> {
         final String jsonPath = options.param(0);
 
         try {
-            Object result = input instanceof String ?
-                JsonPath.using(Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build()).parse((String) input).read(jsonPath) :
-                JsonPath.using(Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build()).parse(input).read(jsonPath);
-
+            final DocumentContext jsonDocument = getJsonDocument(input, options);
+            Object result = getValue(jsonPath, jsonDocument, options);
             return JsonData.create(result);
         } catch (InvalidJsonException e) {
             return this.handleError(
@@ -51,5 +51,31 @@ public class HandlebarsJsonPathHelper extends HandlebarsHelper<Object> {
         } catch (JsonPathException e) {
             return this.handleError(jsonPath + " is not a valid JSONPath expression", e);
         }
+    }
+
+    private Object getValue(String jsonPath, DocumentContext jsonDocument, Options options) {
+        RenderCache renderCache = getRenderCache(options);
+        RenderCache.Key cacheKey = RenderCache.Key.keyFor(Object.class, jsonPath, jsonDocument);
+        Object value = renderCache.get(cacheKey);
+        if (value == null) {
+            value = jsonDocument.read(jsonPath);
+            renderCache.put(cacheKey, value);
+        }
+
+        return value;
+    }
+
+    private DocumentContext getJsonDocument(Object json, Options options) {
+        RenderCache renderCache = getRenderCache(options);
+        RenderCache.Key cacheKey = RenderCache.Key.keyFor(DocumentContext.class, json);
+        DocumentContext document = renderCache.get(cacheKey);
+        if (document == null) {
+            document = json instanceof String ?
+                    JsonPath.using(Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build()).parse((String) json) :
+                    JsonPath.using(Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build()).parse(json);
+            renderCache.put(cacheKey, document);
+        }
+
+        return document;
     }
 }
