@@ -170,9 +170,15 @@ public enum WireMockHelpers implements Helper<Object> {
     multiply {
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
-            Double amount = options.param(0, 0.0);
+            Double dblFirstParam = 0.0;
+            Object firstParam = options.param(0);
+            if (firstParam instanceof Integer) {
+                dblFirstParam = ((Integer) firstParam).doubleValue();
+            } else {
+                dblFirstParam = (Double) firstParam;
+            }
             if (context instanceof Double) {
-                return (Double) context * amount;
+                return (Double) context * dblFirstParam;
             }
 
             return context.toString();
