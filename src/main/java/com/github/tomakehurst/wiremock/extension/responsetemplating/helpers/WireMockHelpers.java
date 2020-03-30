@@ -153,15 +153,46 @@ public enum WireMockHelpers implements Helper<Object> {
             return helper.apply(context.toString(), options);
         }
     },
+    add {
+
+        @Override
+        public Object apply(final Object context, final Options options) throws IOException {
+            Double dblFirstParam = 0.0;
+            Object firstParam = options.param(0);
+            if (firstParam instanceof Integer) {
+                dblFirstParam = ((Integer) firstParam).doubleValue();
+            } else {
+                dblFirstParam = (Double) firstParam;
+            }
+            if (context instanceof Double) {
+                return (Double) context + dblFirstParam;
+            }
+            if (context instanceof String) {
+                Double dblContext = Double.parseDouble((String)context);
+                return (Double) dblContext + dblFirstParam;
+            }
+            return context.toString();
+        }
+    },
     subtract {
         private HandlebarsJsonPathHelper helper = new HandlebarsJsonPathHelper();
 
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
-            Object jsonObject = this.helper.apply(String.valueOf(context), options);
-            Integer amount = options.param(1, 0);
-            if (jsonObject instanceof Double) {
-                return (Double) jsonObject - amount;
+            Object jsonObject = null;
+            Double amount = 0.0;
+            if (context instanceof Double) {
+                Object firstParam = options.param(0);
+                if (firstParam instanceof String) {
+                    amount = Double.parseDouble((String)firstParam);
+                }
+                return (Double) context - amount;
+            } else {
+                jsonObject = this.helper.apply(String.valueOf(context), options);
+                amount = ((Integer)options.param(1, 0)).doubleValue();
+                if (jsonObject instanceof Double) {
+                    return (Double) jsonObject - amount;
+                }
             }
 
             return jsonObject.toString();
@@ -179,6 +210,10 @@ public enum WireMockHelpers implements Helper<Object> {
             }
             if (context instanceof Double) {
                 return (Double) context * dblFirstParam;
+            }
+            if (context instanceof String) {
+                double dblValue = Double.parseDouble((String) context);
+                return dblValue * dblFirstParam;
             }
 
             return context.toString();
