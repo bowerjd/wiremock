@@ -115,6 +115,7 @@ public class JettyHttpServer implements HttpServer {
                 options.filesRoot(),
                 options.getAsynchronousResponseSettings(),
                 options.getChunkedEncodingPolicy(),
+                options.getStubCorsEnabled(),
                 notifier
         );
 
@@ -162,7 +163,7 @@ public class JettyHttpServer implements HttpServer {
 
     protected void finalizeSetup(Options options) {
         if(!options.jettySettings().getStopTimeout().isPresent()) {
-            jettyServer.setStopTimeout(0);
+            jettyServer.setStopTimeout(1000);
         }
     }
 
@@ -266,7 +267,8 @@ public class JettyHttpServer implements HttpServer {
         SslContextFactory sslContextFactory = buildSslContextFactory();
 
         sslContextFactory.setKeyStorePath(httpsSettings.keyStorePath());
-        sslContextFactory.setKeyManagerPassword(httpsSettings.keyStorePassword());
+        sslContextFactory.setKeyStorePassword(httpsSettings.keyStorePassword());
+        sslContextFactory.setKeyManagerPassword(httpsSettings.keyManagerPassword());
         sslContextFactory.setKeyStoreType(httpsSettings.keyStoreType());
         if (httpsSettings.hasTrustStore()) {
             sslContextFactory.setTrustStorePath(httpsSettings.trustStorePath());
@@ -335,14 +337,11 @@ public class JettyHttpServer implements HttpServer {
                 2,
                 connectionFactories
         );
+
         connector.setPort(port);
-
         connector.addNetworkTrafficListener(listener);
-
         setJettySettings(jettySettings, connector);
-
         connector.setHost(bindAddress);
-
         return connector;
     }
 
@@ -358,6 +357,7 @@ public class JettyHttpServer implements HttpServer {
             FileSource fileSource,
             AsynchronousResponseSettings asynchronousResponseSettings,
             Options.ChunkedEncodingPolicy chunkedEncodingPolicy,
+            boolean stubCorsEnabled,
             Notifier notifier
     ) {
         ServletContextHandler mockServiceContext = new ServletContextHandler(jettyServer, "/");
@@ -392,10 +392,15 @@ public class JettyHttpServer implements HttpServer {
         mockServiceContext.setMimeTypes(mimeTypes);
         mockServiceContext.setWelcomeFiles(new String[]{"index.json", "index.html", "index.xml", "index.txt"});
 
-        mockServiceContext.setErrorHandler(new NotFoundHandler());
+        NotFoundHandler errorHandler = new NotFoundHandler(mockServiceContext);
+        mockServiceContext.setErrorHandler(errorHandler);
 
         mockServiceContext.addFilter(ContentTypeSettingFilter.class, FILES_URL_MATCH, EnumSet.of(DispatcherType.FORWARD));
         mockServiceContext.addFilter(TrailingSlashFilter.class, FILES_URL_MATCH, EnumSet.allOf(DispatcherType.class));
+
+        if (stubCorsEnabled) {
+            addCorsFilter(mockServiceContext);
+        }
 
         return mockServiceContext;
     }
@@ -432,16 +437,23 @@ public class JettyHttpServer implements HttpServer {
 
         adminContext.setAttribute(MultipartRequestConfigurer.KEY, buildMultipartRequestConfigurer());
 
-        FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
-        filterHolder.setInitParameters(ImmutableMap.of(
-            "chainPreflight", "false",
-            "allowedOrigins", "*",
-            "allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin,Authorization",
-            "allowedMethods", "OPTIONS,GET,POST,PUT,PATCH,DELETE"));
-
-        adminContext.addFilter(filterHolder, "/*", EnumSet.of(DispatcherType.REQUEST));
+        addCorsFilter(adminContext);
 
         return adminContext;
+    }
+
+    private void addCorsFilter(ServletContextHandler context) {
+        context.addFilter(buildCorsFilter(), "/*", EnumSet.of(DispatcherType.REQUEST));
+    }
+
+    private FilterHolder buildCorsFilter() {
+        FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
+        filterHolder.setInitParameters(ImmutableMap.of(
+                "chainPreflight", "false",
+                "allowedOrigins", "*",
+                "allowedHeaders", "*",
+                "allowedMethods", "OPTIONS,GET,POST,PUT,PATCH,DELETE"));
+        return filterHolder;
     }
 
     // Override this for platform-specific impls

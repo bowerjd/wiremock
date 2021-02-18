@@ -15,11 +15,11 @@
  */
 package com.github.tomakehurst.wiremock.extension.responsetemplating.helpers;
 
-import com.github.jknack.handlebars.Helper;
-import com.github.jknack.handlebars.Options;
-
 import java.io.IOException;
 import java.util.Date;
+
+import com.github.jknack.handlebars.Helper;
+import com.github.jknack.handlebars.Options;
 
 /**
  * This enum is implemented similar to the StringHelpers of handlebars.
@@ -27,7 +27,7 @@ import java.util.Date;
  */
 public enum WireMockHelpers implements Helper<Object> {
     xPath {
-        private HandlebarsXPathHelper helper = new HandlebarsXPathHelper();
+        private final HandlebarsXPathHelper helper = new HandlebarsXPathHelper();
 
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
@@ -35,7 +35,7 @@ public enum WireMockHelpers implements Helper<Object> {
         }
     },
     soapXPath {
-        private HandlebarsSoapHelper helper = new HandlebarsSoapHelper();
+        private final HandlebarsSoapHelper helper = new HandlebarsSoapHelper();
 
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
@@ -43,7 +43,7 @@ public enum WireMockHelpers implements Helper<Object> {
         }
     },
     jsonPath {
-        private HandlebarsJsonPathHelper helper = new HandlebarsJsonPathHelper();
+        private final HandlebarsJsonPathHelper helper = new HandlebarsJsonPathHelper();
 
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
@@ -51,7 +51,7 @@ public enum WireMockHelpers implements Helper<Object> {
         }
     },
     randomValue {
-        private HandlebarsRandomValuesHelper helper = new HandlebarsRandomValuesHelper();
+        private final HandlebarsRandomValuesHelper helper = new HandlebarsRandomValuesHelper();
 
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
@@ -59,7 +59,7 @@ public enum WireMockHelpers implements Helper<Object> {
         }
     },
     hostname {
-        private HostnameHelper helper = new HostnameHelper();
+        private final HostnameHelper helper = new HostnameHelper();
 
         @Override
         public Object apply(Object context, Options options) throws IOException {
@@ -67,7 +67,7 @@ public enum WireMockHelpers implements Helper<Object> {
         }
     },
     date {
-        private HandlebarsCurrentDateHelper helper = new HandlebarsCurrentDateHelper();
+        private final HandlebarsCurrentDateHelper helper = new HandlebarsCurrentDateHelper();
 
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
@@ -76,7 +76,7 @@ public enum WireMockHelpers implements Helper<Object> {
         }
     },
     now {
-        private HandlebarsCurrentDateHelper helper = new HandlebarsCurrentDateHelper();
+        private final HandlebarsCurrentDateHelper helper = new HandlebarsCurrentDateHelper();
 
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
@@ -84,7 +84,7 @@ public enum WireMockHelpers implements Helper<Object> {
         }
     },
     parseDate {
-        private ParseDateHelper helper = new ParseDateHelper();
+        private final ParseDateHelper helper = new ParseDateHelper();
 
         @Override
         public Object apply(Object context, Options options) throws IOException {
@@ -93,7 +93,7 @@ public enum WireMockHelpers implements Helper<Object> {
     },
 
     trim {
-        private StringTrimHelper helper = new StringTrimHelper();
+        private final StringTrimHelper helper = new StringTrimHelper();
 
         @Override
         public Object apply(Object context, Options options) throws IOException {
@@ -102,7 +102,7 @@ public enum WireMockHelpers implements Helper<Object> {
     },
 
     base64 {
-        private Base64Helper helper = new Base64Helper();
+        private final Base64Helper helper = new Base64Helper();
 
         @Override
         public Object apply(Object context, Options options) throws IOException {
@@ -111,7 +111,7 @@ public enum WireMockHelpers implements Helper<Object> {
     },
 
     urlEncode {
-        private UrlEncodingHelper helper = new UrlEncodingHelper();
+        private final UrlEncodingHelper helper = new UrlEncodingHelper();
 
         @Override
         public Object apply(Object context, Options options) throws IOException {
@@ -120,7 +120,7 @@ public enum WireMockHelpers implements Helper<Object> {
     },
 
     formData {
-        private FormDataHelper helper = new FormDataHelper();
+        private final FormDataHelper helper = new FormDataHelper();
 
         @Override
         public Object apply(Object context, Options options) throws IOException {
@@ -129,7 +129,7 @@ public enum WireMockHelpers implements Helper<Object> {
     },
 
     regexExtract {
-        private RegexExtractHelper helper = new RegexExtractHelper();
+        private final RegexExtractHelper helper = new RegexExtractHelper();
 
         @Override
         public Object apply(Object context, Options options) throws IOException {
@@ -138,13 +138,23 @@ public enum WireMockHelpers implements Helper<Object> {
     },
 
     size {
-        private SizeHelper helper = new SizeHelper();
+        private final SizeHelper helper = new SizeHelper();
 
         @Override
         public Object apply(Object context, Options options) throws IOException {
             return helper.apply(context, options);
         }
     },
+
+    pickRandom {
+        private final PickRandomHelper helper = new PickRandomHelper();
+
+        @Override
+        public Object apply(Object context, Options options) throws IOException {
+            return helper.apply(context, options);
+        }
+    },
+
 	forEachJson {
         private HandlebarsForEachJsonHelper helper = new HandlebarsForEachJsonHelper();
 
@@ -153,8 +163,8 @@ public enum WireMockHelpers implements Helper<Object> {
             return helper.apply(context.toString(), options);
         }
     },
-    add {
 
+    add {
         @Override
         public Object apply(final Object context, final Options options) throws IOException {
             Double dblFirstParam = 0.0;
@@ -169,11 +179,12 @@ public enum WireMockHelpers implements Helper<Object> {
             }
             if (context instanceof String) {
                 Double dblContext = Double.parseDouble((String)context);
-                return (Double) dblContext + dblFirstParam;
+                return dblContext + dblFirstParam;
             }
             return context.toString();
         }
     },
+
     subtract {
         private HandlebarsJsonPathHelper helper = new HandlebarsJsonPathHelper();
 
@@ -189,7 +200,7 @@ public enum WireMockHelpers implements Helper<Object> {
                 return (Double) context - amount;
             } else {
                 jsonObject = this.helper.apply(String.valueOf(context), options);
-                amount = ((Integer)options.param(1, 0)).doubleValue();
+                amount = options.param(1, 0).doubleValue();
                 if (jsonObject instanceof Double) {
                     return (Double) jsonObject - amount;
                 }
@@ -198,6 +209,7 @@ public enum WireMockHelpers implements Helper<Object> {
             return jsonObject.toString();
         }
     },
+
     multiply {
         @Override
         public Object apply(final Object context, final Options options) throws IOException {

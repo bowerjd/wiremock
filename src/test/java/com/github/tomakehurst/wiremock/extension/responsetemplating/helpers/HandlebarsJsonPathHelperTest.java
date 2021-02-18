@@ -15,24 +15,6 @@
  */
 package com.github.tomakehurst.wiremock.extension.responsetemplating.helpers;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.matching.MockRequest.mockRequest;
-import static com.github.tomakehurst.wiremock.testsupport.NoFileSource.noFileSource;
-import static com.github.tomakehurst.wiremock.testsupport.WireMatchers.equalToJson;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.github.jknack.handlebars.Context;
 import com.github.jknack.handlebars.Options;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
@@ -43,17 +25,27 @@ import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemp
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
 import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.matching.MockRequest.mockRequest;
+import static com.github.tomakehurst.wiremock.testsupport.NoFileSource.noFileSource;
+import static com.github.tomakehurst.wiremock.testsupport.WireMatchers.equalToJson;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class HandlebarsJsonPathHelperTest extends HandlebarsHelperTestBase {
 
     private HandlebarsJsonPathHelper helper;
-    private ResponseTemplateTransformer transformer;
 
     @Before
     public void init() {
         helper = new HandlebarsJsonPathHelper();
-        transformer = new ResponseTemplateTransformer(true);
-
         LocalNotifier.set(new ConsoleNotifier(true));
     }
 
@@ -104,8 +96,7 @@ public class HandlebarsJsonPathHelperTest extends HandlebarsHelperTestBase {
                     "    ]\n" +
                     "}"),
             aResponse()
-                .withBody("" +
-                    "{{#each (jsonPath request.body '$.items') as |item|}}{{item.name}} {{/each}}")
+                .withBody("{{#each (jsonPath request.body '$.items') as |item|}}{{item.name}} {{/each}}")
                 .build(),
             noFileSource(),
             Parameters.empty());
@@ -203,13 +194,10 @@ public class HandlebarsJsonPathHelperTest extends HandlebarsHelperTestBase {
         testHelperError(helper, "{\"test\":\"success}", "$.test", is("[ERROR: {\"test\":\"success} is not valid JSON]"));
     }
 
-    /**
-     * Commenting out this test as we have changed this helper to return null for invalid
-     * json paths rather than return an error message.
     @Test
     public void rendersAMeaningfulErrorWhenJsonPathIsInvalid() {
         testHelperError(helper, "{\"test\":\"success\"}", "$.\\test", is("[ERROR: $.\\test is not a valid JSONPath expression]"));
-    }*/
+    }
 
     @Test
     public void rendersAnEmptyStringWhenJsonIsNull() {
